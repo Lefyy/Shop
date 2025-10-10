@@ -1,0 +1,28 @@
+{% extends "shop/base.html" %}
+{% block content %}
+<h3>Административный просмотр таблиц</h3>
+
+<h4>Пользователи</h4>
+<table class="table table-sm"><thead><tr><th>ID</th><th>username</th><th>email</th></tr></thead>
+<tbody>
+{% for u in users %}
+  <tr><td>{{ u.id }}</td><td>{{ u.username }}</td><td>{{ u.email }}</td></tr>
+{% endfor %}
+</tbody></table>
+
+<h4>Товары</h4>
+<table class="table table-sm"><thead><tr><th>ID</th><th>Название</th><th>Цена</th><th>Кол-во</th></tr></thead>
+<tbody>
+{% for p in products %}
+  <tr><td>{{ p.id }}</td><td>{{ p.name }}</td><td>{{ p.price }}</td><td>{{ p.quantity }}</td></tr>
+{% endfor %}
+</tbody></table>
+
+<h4>Заказы</h4>
+<table class="table table-sm"><thead><tr><th>ID</th><th>Клиент</th><th>Дата</th><th>Статус</th></tr></thead>
+<tbody>
+{% for o in orders %}
+  <tr><td>{{ o.id }}</td><td>{{ o.customer.full_name }}</td><td>{{ o.created_date }}</td><td>{{ o.status.name }}</td></tr>
+{% endfor %}
+</tbody></table>
+{% endblock %}

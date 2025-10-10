@@ -1,0 +1,25 @@
+{% extends "shop/base.html" %}
+{% block content %}
+<div class="row">
+  <div class="col-md-6">
+    {% if product.image %}
+      <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}">
+    {% endif %}
+  </div>
+  <div class="col-md-6">
+    <h2>{{ product.name }}</h2>
+    <p>Категория: {{ product.category.name }}</p>
+    <p>Цена: {{ product.price }} ₽</p>
+    <p>В наличии: {{ product.quantity }}</p>
+
+    <form action="{% url 'shop:add_to_cart' product.pk %}" method="post">
+      {% csrf_token %}
+      <div class="mb-2">
+        <label>Количество</label>
+        <input type="number" name="quantity" value="1" min="1" class="form-control" style="width: 100px;">
+      </div>
+      <button class="btn btn-primary">В корзину</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

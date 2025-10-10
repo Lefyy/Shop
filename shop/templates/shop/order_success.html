@@ -1,0 +1,32 @@
+{% extends "shop/base.html" %}
+{% block title %}Заказ принят{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <h3>Спасибо — заказ №{{ order.id }} принят</h3>
+    <p>Клиент: {{ order.customer.full_name }}</p>
+    <p>Статус: {{ order.status.name }}</p>
+    <p>Дата: {{ order.created_date }}</p>
+
+    <h5 class="mt-4">Состав заказа</h5>
+    <table class="table">
+      <thead><tr><th>Товар</th><th>Цена</th><th>Кол-во</th><th>Сумма</th></tr></thead>
+      <tbody>
+      {% for item in order.orderitem_set.all %}
+        <tr>
+          <td>{{ item.product.name }}</td>
+          <td>{{ item.unit_price }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.unit_price|floatformat:2|add:"0"|floatformat:2|floatformat }} × {{ item.quantity }} = {{ item.unit_price|floatformat:2|floatformat }}{% comment %} отображение суммы ниже %}{% endcomment %}
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">Позиции заказа не найдены.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <a href="{% url 'shop:product_list' %}" class="btn btn-primary">Вернуться в магазин</a>
+  </div>
+</div>
+{% endblock %}

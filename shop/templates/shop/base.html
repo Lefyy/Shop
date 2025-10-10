@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}ArrayShop{% endblock %}</title>
+  <!-- Подключите Bootstrap или свой CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'shop:product_list' %}">ArrayShop</a>
+    <div>
+      <a href="{% url 'shop:view_cart' %}" class="btn btn-outline-primary">Корзина</a>
+      {% if user.is_authenticated %}
+        <span class="ms-2">Привет, {{ user.username }}</span>
+        <a href="{% url 'logout' %}" class="btn btn-link">Выйти</a>
+      {% else %}
+        <a href="{% url 'login' %}" class="btn btn-link">Войти</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+<div class="container mt-4">
+  {% block content %}{% endblock %}
+</div>
+</body>
+</html>
