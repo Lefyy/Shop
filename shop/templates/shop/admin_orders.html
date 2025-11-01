@@ -1,0 +1,32 @@
+{% extends "shop/base.html" %}
+{% block content %}
+<div class="container-fluid mt-4">
+
+    {% if customer_filter %}
+        <h3><i class="fas fa-shopping-cart"></i> Заказы покупателя: {{ customer_filter.login }}</h3>
+        <a href="{% url 'shop:admin_customers' %}" class="btn btn-sm btn-outline-secondary mb-3">&larr; К списку покупателей</a>
+    {% else %}
+        <h3><i class="fas fa-shopping-cart"></i> Все заказы</h3>
+        <a href="{% url 'shop:admin_tables_main' %}" class="btn btn-sm btn-outline-secondary mb-3">&larr; Назад к админ-панели</a>
+    {% endif %}
+
+    <form method="GET" class="form-inline mb-3">
+        <input class="form-control mr-sm-2" type="search" placeholder="Поиск по логину..." name="q" value="{{ search_query }}">
+
+        <select name="sort" class="form-control mr-sm-2" onchange="this.form.submit()">
+            <option value="-created_date" {% if current_sort == '-created_date' %}selected{% endif %}>Сначала новые</option>
+            <option value="created_date" {% if current_sort == 'created_date' %}selected{% endif %}>Сначала старые</option>
+            <option value="-total_price" {% if current_sort == '-total_price' %}selected{% endif %}>Сначала дорогие</option>
+            <option value="total_price" {% if current_sort == 'total_price' %}selected{% endif %}>Сначала дешевые</option>
+            <option value="-id" {% if current_sort == '-id' %}selected{% endif %}>ID (по убыв.)</option>
+            <option value="id" {% if current_sort == 'id' %}selected{% endif %}>ID (по возр.)</option>
+        </select>
+
+        <noscript>
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Применить</button>
+        </noscript>
+    </form>
+
+    {% include "shop/_orders_table.html" with orders=orders is_admin=True all_statuses=all_statuses %}
+</div>
+{% endblock %}

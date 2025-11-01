@@ -1,28 +1,18 @@
 {% extends "shop/base.html" %}
 {% block content %}
-<h3>Административный просмотр таблиц</h3>
-
-<h4>Пользователи</h4>
-<table class="table table-sm"><thead><tr><th>ID</th><th>username</th><th>email</th></tr></thead>
-<tbody>
-{% for u in users %}
-  <tr><td>{{ u.id }}</td><td>{{ u.username }}</td><td>{{ u.email }}</td></tr>
-{% endfor %}
-</tbody></table>
-
-<h4>Товары</h4>
-<table class="table table-sm"><thead><tr><th>ID</th><th>Название</th><th>Цена</th><th>Кол-во</th></tr></thead>
-<tbody>
-{% for p in products %}
-  <tr><td>{{ p.id }}</td><td>{{ p.name }}</td><td>{{ p.price }}</td><td>{{ p.quantity }}</td></tr>
-{% endfor %}
-</tbody></table>
-
-<h4>Заказы</h4>
-<table class="table table-sm"><thead><tr><th>ID</th><th>Клиент</th><th>Дата</th><th>Статус</th></tr></thead>
-<tbody>
-{% for o in orders %}
-  <tr><td>{{ o.id }}</td><td>{{ o.customer.full_name }}</td><td>{{ o.created_date }}</td><td>{{ o.status.name }}</td></tr>
-{% endfor %}
-</tbody></table>
+<div class="container mt-4">
+    <h3>Админ-панель</h3>
+    <p>Выберите раздел для управления:</p>
+    
+    <div class="admin-button-grid">
+        <a href="{% url 'shop:admin_customers' %}" class="admin-button" style="background-color: #198754;"> <i class="fas fa-users" style="margin-right: 15px;"></i> Покупатели
+        </a>
+        <a href="{% url 'shop:admin_orders' %}" class="admin-button" style="background-color: #0d6efd;"> <i class="fas fa-shopping-cart" style="margin-right: 15px;"></i> Заказы
+        </a>
+        <a href="{% url 'shop:admin_products' %}" class="admin-button" style="background-color: #dc3545;"> <i class="fas fa-box-open" style="margin-right: 15px;"></i> Продукты
+        </a>
+        <a href="{% url 'shop:admin_statistics' %}" class="admin-button" style="background-color: #20c997;"> <i class="fas fa-chart-line" style="margin-right:10px;"></i> Статистика
+        </a>
+    </div>
+</div>
 {% endblock %}

@@ -1,0 +1,15 @@
+{% extends "shop/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>{{ form_title }}</h3>
+    <a href="{% url 'shop:admin_products' %}" class="btn btn-sm btn-outline-secondary mb-3">&larr; К списку продуктов</a>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-success">Сохранить</button>
+    </form>
+</div>
+{% endblock %}

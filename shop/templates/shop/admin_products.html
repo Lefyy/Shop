@@ -1,0 +1,111 @@
+{% extends "shop/base.html" %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <h3><i class="fas fa-box-open"></i> Продукты</h3>
+    <a href="{% url 'shop:admin_tables_main' %}" class="btn btn-sm btn-outline-secondary mb-3">&larr; Назад к админ-панели</a>
+    <a href="{% url 'shop:admin_add_product' %}" class="btn btn-sm btn-primary mb-3"><i class="fas fa-plus"></i> Добавить новый товар</a>
+    
+    <form method="GET" class="form-inline mb-3">
+        <div class="input-group me-2">
+            <select name="q_by" class="form-select">
+                <option value="name" {% if search_by == 'name' %}selected{% endif %}>Название</option>
+                <option value="id" {% if search_by == 'id' %}selected{% endif %}>ID</option>
+            </select>
+            <input class="form-control" type="search" placeholder="Поиск..." name="q" value="{{ search_query }}">
+            <button class="btn btn-outline-success" type="submit">Поиск</button>
+        </div>
+
+        <select name="sort" class="form-control ms-2" onchange="this.form.submit()">
+            <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Название (A→Z)</option>
+            <option value="-name" {% if current_sort == '-name' %}selected{% endif %}>Название (Z→A)</option>
+            <option value="price" {% if current_sort == 'price' %}selected{% endif %}>Цена ↑</option>
+            <option value="-price" {% if current_sort == '-price' %}selected{% endif %}>Цена ↓</option>
+            <option value="quantity" {% if current_sort == 'quantity' %}selected{% endif %}>Кол-во ↑</option>
+            <option value="-quantity" {% if current_sort == '-quantity' %}selected{% endif %}>Кол-во ↓</option>
+            <option value="id" {% if current_sort == 'id' %}selected{% endif %}>ID ↑</option>
+            <option value="-id" {% if current_sort == '-id' %}selected{% endif %}>ID ↓</option>
+        </select>
+
+        <select name="category" class="form-control ms-2" onchange="this.form.submit()">
+            <option value="">Все категории</option>
+            {% for category in all_categories %}
+                <option value="{{ category.id }}" {% if current_category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Изображение</th>
+                    <th>Название</th>
+                    <th>Цена за ед.</th>
+                    <th>Кол-во на складе</th>
+                    <th>Категория</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>{{ product.id }}</td>
+                    <td>
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width: 60px; height: 60px; object-fit: cover;">
+                        {% else %}
+                            (Нет фото)
+                        {% endif %}
+                    </td>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.price }} руб.</td>
+                    <td>{{ product.quantity }}</td>
+                    <td>{{ product.category.name }}</td>
+                    <td>
+                        <a href="{% url 'shop:admin_edit_product' product_id=product.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i> Редактировать
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">Продукты не найдены.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% if products.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+          
+          {% if products.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page=1&category={{ current_category }}">&laquo;</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}&category={{ current_category }}">Назад</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+            <li class="page-item disabled"><span class="page-link">Назад</span></li>
+          {% endif %}
+          
+          {% for i in products.paginator.page_range %}
+            {% if products.number == i %}
+              <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
+            {% elif i > products.number|add:'-3' and i < products.number|add:'3' %}
+              <li class="page-item"><a class="page-link" href="?page={{ i }}&category={{ current_category }}">{{ i }}</a></li>
+            {% endif %}
+          {% endfor %}
+          
+          {% if products.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ products.next_page_number }}&category={{ current_category }}">Вперед</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ products.paginator.num_pages }}&category={{ current_category }}">&raquo;</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Вперед</span></li>
+            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+    </div>
+{% endblock %}

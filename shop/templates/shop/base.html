@@ -2,19 +2,83 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>{% block title %}ArrayShop{% endblock %}</title>
-  <!-- Подключите Bootstrap или свой CSS -->
+  <title>{% block title %}Shop{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .list-group-item.active a {
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .list-group-item a {
+      text-decoration: none;
+      color: #0d6efd;
+    }
+
+    .list-group-item a:hover {
+      color: #efefefff;
+    }
+
+    button[data-bs-toggle="collapse"] .fas {
+        transition: transform 0.2s ease-in-out;
+    }
+
+    button[data-bs-toggle="collapse"][aria-expanded="true"] .fas {
+        transform: rotate(180deg);
+    }
+
+    .admin-button-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .admin-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+        font-size: 1.5rem;
+        font-weight: 500;
+        text-decoration: none;
+        color: #fff;
+        background-color: #0d6efd;
+        border-radius: 15px;
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .admin-button:hover {
+        color: #fff;
+        background-color: #0b5ed7;
+        transform: translateY(-5px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <div class="container">
-    <a class="navbar-brand" href="{% url 'shop:product_list' %}">ArrayShop</a>
+    <a class="navbar-brand" href="{% url 'shop:product_list' %}">Shop</a>
     <div>
       <a href="{% url 'shop:view_cart' %}" class="btn btn-outline-primary">Корзина</a>
       {% if user.is_authenticated %}
-        <span class="ms-2">Привет, {{ user.username }}</span>
-        <a href="{% url 'logout' %}" class="btn btn-link">Выйти</a>
+        
+        <a href="{% url 'shop:profile' %}" class="btn btn-outline-secondary ms-2">
+          Привет, {{ user.username }}
+        </a>
+
+        {% if user.is_staff %}
+          <a href="{% url 'shop:admin_tables_main' %}" class="btn btn-outline-secondary ms-2">
+            Панель администратора
+          </a>
+        {% endif %}
+        <form action="{% url 'logout' %}" method="post" style="display:inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-link">Выйти</button>
+        </form>
       {% else %}
         <a href="{% url 'login' %}" class="btn btn-link">Войти</a>
       {% endif %}

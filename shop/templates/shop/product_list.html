@@ -8,15 +8,15 @@
       <li class="list-group-item"><a href="{% url 'shop:product_list' %}">Все</a></li>
       {% for c in categories %}
         <li class="list-group-item {% if current_category|add:'' == c.id|stringformat:"s" %}active{% endif %}">
-          <a href="?category={{ c.id }}">{{ c.name }}</a>
+          <a href="?category={{ c.id }}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ c.name }}</a>
         </li>
       {% endfor %}
     </ul>
     <h5 class="mt-3">Сортировка</h5>
-    <div>
-      <a href="?sort=price_asc" class="btn btn-sm btn-outline-secondary">Цена ↑</a>
-      <a href="?sort=price_desc" class="btn btn-sm btn-outline-secondary">Цена ↓</a>
-      <a href="?sort=popularity" class="btn btn-sm btn-outline-secondary">Популярные</a>
+    <div class="d-flex justify-content-end mb-3">
+      <a class="btn btn-sm btn-outline-secondary me-2" href="?sort=price_asc{% if current_category %}&category={{ current_category }}{% endif %}">Цена ↑</a>
+      <a class="btn btn-sm btn-outline-secondary me-2" href="?sort=price_desc{% if current_category %}&category={{ current_category }}{% endif %}">Цена ↓</a>
+      <a class="btn btn-sm btn-outline-secondary" href="?sort=popularity{% if current_category %}&category={{ current_category }}{% endif %}">Популярные</a>
     </div>
   </div>
   <div class="col-md-9">
@@ -37,13 +37,31 @@
     </div>
     {% if is_paginated %}
       <nav aria-label="Page navigation">
-        <ul class="pagination">
+        <ul class="pagination justify-content-center">
           {% if page_obj.has_previous %}
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Prev</a></li>
+            <li class="page-item"><a class="page-link" href="?page=1{% if current_category %}&category={{ current_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">&laquo;&laquo;</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">&lt;</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo;&laquo;</span></li>
+            <li class="page-item disabled"><span class="page-link">&lt;</span></li>
           {% endif %}
-          <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+
+          {% for i in page_obj.paginator.page_range %}
+            {% if i >= page_obj.number|add:'-1' and i <= page_obj.number|add:'1' %}
+              {% if page_obj.number == i %}
+                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+              {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ i }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ i }}</a></li>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+
           {% if page_obj.has_next %}
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">&gt;</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">&raquo;&raquo;</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&gt;</span></li>
+            <li class="page-item disabled"><span class="page-link">&raquo;&raquo;</span></li>
           {% endif %}
         </ul>
       </nav>

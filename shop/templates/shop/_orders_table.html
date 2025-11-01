@@ -1,0 +1,92 @@
+<div class="table-responsive">
+  <table class="table table-sm table-hover">
+    <thead>
+      <tr>
+        <th></th>
+        <th>ID Заказа</th>
+        <th>Логин покупателя</th>
+        <th>Статус</th>
+        <th>Дата создания</th>
+        <th>Позиции (уникальные)</th>
+        <th>Общая сумма</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in orders %}
+      <tr class="accordion-toggle">
+        <td>
+          <button class="btn btn-sm btn-outline-info"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#order-{{ order.id }}"
+                  aria-expanded="false"
+                  aria-controls="order-{{ order.id }}">
+            <i class="fas fa-chevron-down"></i>
+          </button>
+        </td>
+
+        <td>{{ order.id }}</td>
+        <td>{% if order.customer %}{{ order.customer.login }}{% else %}-{% endif %}</td>
+
+        <td onclick="event.stopPropagation();">
+          {% if is_admin %}
+            <form method="POST" action="{% url 'shop:admin_update_order_status' order_id=order.id %}" onsubmit="return confirm('Изменить статус?');">
+              {% csrf_token %}
+              <select name="status_id" class="form-control form-control-sm" onchange="this.form.submit()">
+                {% for status in all_statuses %}
+                  <option value="{{ status.id }}" {% if status.id == order.status.id %}selected{% endif %}>{{ status.name }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" style="display:none"></button>
+            </form>
+          {% else %}
+            {{ order.status.name }}
+          {% endif %}
+        </td>
+
+        <td>{{ order.created_date|date:"d.m.Y H:i:s" }}</td>
+        <td>{{ order.total_items|default:0 }} ({{ order.unique_items|default:0 }})</td>
+        <td>{{ order.total_price|default:"0.00" }} руб.</td>
+      </tr>
+
+      <tr>
+        <td colspan="7" class="p-0">
+          <div id="order-{{ order.id }}" class="collapse">
+            <div class="p-3" style="background-color: #f9f9f9;">
+              <h5>Детали заказа #{{ order.id }}</h5>
+              <table class="table table-sm table-bordered bg-white">
+                <thead class="thead-light">
+                  <tr>
+                    <th>ID Позиции</th>
+                    <th>ID Товара</th>
+                    <th>Название товара</th>
+                    <th>Кол-во</th>
+                    <th>Цена за ед.</th>
+                    <th>Общая стоимость</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in order.orderitem_set.all %}
+                  <tr>
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.product.id }}</td>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.unit_price }} руб.</td>
+                    <td>{{ item.total_price }} руб.</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" class="text-center">Заказы не найдены.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

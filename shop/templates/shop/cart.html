@@ -1,25 +1,78 @@
 {% extends "shop/base.html" %}
+{% load dict_extras %}
 {% block content %}
 <h3>Корзина</h3>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
 {% if items %}
-<table class="table">
-  <thead><tr><th>Товар</th><th>Цена</th><th>Кол-во</th><th>Сумма</th><th></th></tr></thead>
-  <tbody>
-    {% for it in items %}
-    <tr>
-      <td>{{ it.name }}</td>
-      <td>{{ it.price }}</td>
-      <td>{{ it.quantity }}</td>
-      <td>{{ it.subtotal }}</td>
-      <td>
-        <a href="{% url 'shop:remove_from_cart' it.product_id %}" class="btn btn-sm btn-danger">Удалить</a>
-      </td>
-    </tr>
-    {% endfor %}
-    <tr><td colspan="3" class="text-end"><strong>Итого:</strong></td><td>{{ total }}</td><td></td></tr>
-  </tbody>
-</table>
-<a href="{% url 'shop:checkout' %}" class="btn btn-success">Оформить заказ</a>
+<form method="post" action="{% url 'shop:update_cart' %}">
+  {% csrf_token %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Товар</th>
+        <th>Цена</th>
+        <th>Кол-во</th>
+        <th>Сумма</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for it in items %}
+      <tr>
+        <td>{{ it.name }}</td>
+        <td>{{ it.price }}</td>
+        <td style="width:160px;">
+          <div class="input-group">
+            <input
+              type="number"
+              name="quantity_{{ it.product_id }}"
+              value="{{ it.quantity }}"
+              min="0"
+              step="1"
+              class="form-control"
+              {% if product_dict and product_dict.it.product_id %}
+              {% endif %}
+              {% with p=product_dict.it.product_id %}
+              {% endwith %}
+            >
+          </div>
+          {% if product_dict and product_dict|get_item:it.product_id %}
+            {% with prod=product_dict|get_item:it.product_id %}
+              {% if prod.quantity is not None %}
+                <small class="text-muted">доступно: {{ prod.quantity }}</small>
+              {% endif %}
+            {% endwith %}
+          {% endif %}
+        </td>
+        <td>{{ it.subtotal }}</td>
+        <td>
+          <a href="{% url 'shop:remove_from_cart' it.product_id %}" class="btn btn-sm btn-danger">Удалить</a>
+        </td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td colspan="3" class="text-end"><strong>Итого:</strong></td>
+        <td>{{ total }}</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Обновить корзину</button>
+    <a href="{% url 'shop:checkout' %}" class="btn btn-success">Оформить заказ</a>
+    <a href="{% url 'shop:product_list' %}" class="btn btn-outline-secondary">Продолжить покупки</a>
+  </div>
+</form>
 {% else %}
 <p>Ваша корзина пуста.</p>
 {% endif %}

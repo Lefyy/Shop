@@ -12,13 +12,13 @@
     <p>Цена: {{ product.price }} ₽</p>
     <p>В наличии: {{ product.quantity }}</p>
 
-    <form action="{% url 'shop:add_to_cart' product.pk %}" method="post">
+    <form method="post" action="{% url 'shop:add_to_cart' product.id %}">
       {% csrf_token %}
       <div class="mb-2">
-        <label>Количество</label>
-        <input type="number" name="quantity" value="1" min="1" class="form-control" style="width: 100px;">
+        <label for="quantity">Количество</label>
+        <input id="quantity" name="quantity" type="number" min="1" value="1" class="form-control" {% if product.quantity is not None %}max="{{ product.quantity }}"{% endif %}>
       </div>
-      <button class="btn btn-primary">В корзину</button>
+      <button class="btn btn-primary" type="submit">Добавить в корзину</button>
     </form>
   </div>
 </div>
