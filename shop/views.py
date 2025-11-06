@@ -62,19 +62,16 @@ class ProductDetailView(DetailView):
     context_object_name = 'product'
 
 # -------------- Profile --------------
-
 @login_required
 def profile(request):
     user = request.user
     customer = getattr(user, 'customer', None)
-    # Получаем заказы текущего покупателя
     orders = Orders.objects.filter(customer=customer).select_related('status').prefetch_related('orderitem_set__product').annotate(
         total_items=Sum('orderitem__quantity'),
         unique_items=Count('orderitem__product', distinct=True),
         total_price=ExpressionWrapper(Sum(F('orderitem__quantity') * F('orderitem__unit_price')), output_field=DecimalField())
     ).order_by('-created_date')
 
-    # профильный POST для изменения телефона/адреса
     if request.method == 'POST' and 'save_profile' in request.POST:
         phone = request.POST.get('phone_number', '').strip()
         address = request.POST.get('address', '').strip()
@@ -181,7 +178,6 @@ def view_cart(request):
             'subtotal': subtotal,
         })
 
-    # render template with product_dict
     return render(request, 'shop/cart.html', {'items': items, 'total': total, 'product_dict': product_dict})
 
 @require_POST
@@ -191,7 +187,6 @@ def update_cart(request):
         messages.info(request, "Корзина пуста.")
         return redirect('shop:view_cart')
 
-    # Получаем все product_ids, которые присутствуют в POST в виде quantity_<id>
     updates = {}
     for key, value in request.POST.items():
         if not key.startswith('quantity_'):
@@ -207,41 +202,34 @@ def update_cart(request):
             continue
         updates[pid] = qty
 
-    # Загрузим продукты одной выборкой
     product_ids = list(updates.keys())
     products = Product.objects.filter(id__in=product_ids)
     prod_map = {p.id: p for p in products}
 
-    # Пройдём по обновлениям и применим изменения с валидацией
     any_changes = False
     for pid, new_qty in updates.items():
         pid_str = str(pid)
         if pid_str not in cart:
-            # возможно товар был удалён ранее — игнорируем
             continue
 
         product = prod_map.get(pid)
         if product is None:
-            # товар удалён из базы — убираем из корзины
             del cart[pid_str]
             any_changes = True
             messages.warning(request, f"Товар с id {pid} больше недоступен и был удалён из корзины.")
             continue
 
-        # нормализуем new_qty: если <=0 — удаляем
         if new_qty <= 0:
             del cart[pid_str]
             any_changes = True
             continue
 
-        # проверка на максимальное доступное количество
         if product.quantity is not None and new_qty > product.quantity:
             cart[pid_str]['quantity'] = product.quantity
             any_changes = True
             messages.warning(request,
                 f'Количество для "{product.name}" было уменьшено до доступного ({product.quantity}).')
         else:
-            # применяем новое значение
             if cart[pid_str]['quantity'] != new_qty:
                 cart[pid_str]['quantity'] = new_qty
                 any_changes = True
@@ -262,7 +250,6 @@ def checkout(request):
     if not cart:
         return redirect('shop:product_list')
 
-    # подготовка items и total для восстановления контента при ошибке
     def build_cart_items_and_total(cart):
         items = []
         total = Decimal('0.00')
@@ -280,7 +267,6 @@ def checkout(request):
             })
         return items, total
 
-    # GET — показать форму с автозаполнением адреса
     if request.method == 'GET':
         customer = getattr(request.user, 'customer', None)
         initial = {}
@@ -290,14 +276,11 @@ def checkout(request):
         items, total = build_cart_items_and_total(cart)
         return render(request, 'shop/checkout.html', {'form': form, 'items': items, 'total': total})
 
-    # POST — обработка оформления
     form = CheckoutForm(request.POST)
     items, total = build_cart_items_and_total(cart)
     if not form.is_valid():
-        # сразу вернуть с ошибками
         return render(request, 'shop/checkout.html', {'form': form, 'items': items, 'total': total})
 
-    # основная логика: проверка остатков и создание заказа в транзакции
     customer = getattr(request.user, 'customer', None)
     if customer is None:
         form.add_error(None, 'Профиль покупателя не найден. Пожалуйста, свяжитесь с администратором.')
@@ -305,22 +288,18 @@ def checkout(request):
 
     status, _ = OrderStatus.objects.get_or_create(name='Создан')
     try:
-        # Создаём заказ (можно сразу указать адрес при наличии поля Orders.address, если он есть)
         order = Orders.objects.create(customer=customer, status=status)
         total_calc = Decimal('0.00')
 
-        # Для каждого продукта — блокировка записи и проверка количества
         for pid, data in cart.items():
             product = Product.objects.select_for_update().get(pk=int(pid))
             qty = int(data['quantity'])
             if product.quantity is not None and qty > product.quantity:
-                # Откатываем транзакцию и возвращаем ошибку в форме
                 raise ValueError(f'В товаре "{product.name}" доступно только {product.quantity} шт., вы запросили {qty} шт.')
 
             unit_price = Decimal(data['price'])
             OrderItem.objects.create(order=order, product=product, quantity=qty, unit_price=unit_price)
 
-            # уменьшим склад
             if product.quantity is not None:
                 product.quantity = product.quantity - qty
                 if product.quantity < 0:
@@ -329,20 +308,17 @@ def checkout(request):
 
             total_calc += unit_price * qty
 
-        # Сохраняем адрес пользователя (если он ввёл новый)
         address = form.cleaned_data.get('address', '').strip()
         if address:
             if customer.address != address:
                 customer.address = address
                 customer.save()
 
-        # очищаем корзину и редирект на страницу успеха
         request.session.pop(CART_SESSION_ID, None)
         return redirect('shop:order_success', order_id=order.pk)
 
     except Product.DoesNotExist:
         form.add_error(None, 'Один из товаров в корзине больше недоступен.')
-        # откат транзакции автоматически
         return render(request, 'shop/checkout.html', {'form': form, 'items': items, 'total': total})
 
     except ValueError as ve:
@@ -362,22 +338,12 @@ def order_success(request, order_id):
 def is_staff_user(u):
     return u.is_active and u.is_staff
 
-# 1. Главная страница админки (бывшая admin_tables)
 @user_passes_test(is_staff_user)
 def admin_tables_main(request):
-    """
-    Отображает главную страницу админки с тремя кнопками.
-    """
-    # Теперь эта функция просто рендерит шаблон с кнопками
     return render(request, 'shop/admin_tables.html')
 
-
-# 2. Страница "Покупатели"
 @user_passes_test(is_staff_user)
 def admin_customers(request):
-    """
-    Отображает список покупателей (Customer) с поиском по логину.
-    """
     search_query = request.GET.get('q', '')
     
     customers_list = Customer.objects.all().order_by('login')
@@ -391,25 +357,16 @@ def admin_customers(request):
     }
     return render(request, 'shop/admin_customers.html', context)
 
-
-# 3. Страница "Заказы" (общая и для покупателя)
 @user_passes_test(is_staff_user)
 def admin_orders(request, customer_id=None):
-    """
-    Отображает список заказов.
-    Может быть отфильтрован по customer_id.
-    Поддерживает поиск по логину покупателя и сортировку.
-    """
     search_query = request.GET.get('q', '')
-    sort_by = request.GET.get('sort', '-created_date') # Сортировка по умолчанию
+    sort_by = request.GET.get('sort', '-created_date')
 
     orders_list = Orders.objects.select_related('customer', 'status').prefetch_related(
         'orderitem_set', 
         'orderitem_set__product'
     ).all()
 
-    # --- Агрегация ---
-    # Мы используем ExpressionWrapper для корректного подсчета total_price
     total_price_expr = ExpressionWrapper(
         Sum(F('orderitem__quantity') * F('orderitem__unit_price')),
         output_field=DecimalField()
@@ -421,7 +378,6 @@ def admin_orders(request, customer_id=None):
         unique_items=Count('orderitem__product', distinct=True)
     )
 
-    # --- Фильтрация ---
     customer = None
     if customer_id:
         customer = get_object_or_404(Customer, pk=customer_id)
@@ -430,14 +386,12 @@ def admin_orders(request, customer_id=None):
     if search_query:
         orders_list = orders_list.filter(customer__login__icontains=search_query)
 
-    # --- Сортировка ---
     valid_sorts = ['id', '-id', 'created_date', '-created_date', 'total_price', '-total_price']
     if sort_by in valid_sorts:
         orders_list = orders_list.order_by(sort_by)
     else:
-        orders_list = orders_list.order_by('-created_date') # По умолчанию
+        orders_list = orders_list.order_by('-created_date')
 
-    # Получаем все статусы для выпадающего списка
     all_statuses = OrderStatus.objects.all()
 
     context = {
@@ -449,14 +403,9 @@ def admin_orders(request, customer_id=None):
     }
     return render(request, 'shop/admin_orders.html', context)
 
-
-# 4. Обновление статуса заказа (для формы в таблице)
 @user_passes_test(is_staff_user)
-@require_POST # Принимаем только POST запросы
+@require_POST
 def admin_update_order_status(request, order_id):
-    """
-    Обновляет статус заказа.
-    """
     order = get_object_or_404(Orders, pk=order_id)
     status_id = request.POST.get('status_id')
     
@@ -465,20 +414,14 @@ def admin_update_order_status(request, order_id):
         order.status = new_status
         order.save()
         
-    # Возвращаемся на ту же страницу, с которой пришли
     return redirect(request.META.get('HTTP_REFERER', 'shop:admin_orders'))
 
-
-# 5. Страница "Продукты"
 @user_passes_test(is_staff_user)
 def admin_products(request):
-    """
-    Отображает список продуктов с фильтром по категории и пагинацией.
-    """
     category_id = request.GET.get('category', '')
-    sort = request.GET.get('sort', 'name')  # по умолчанию name
+    sort = request.GET.get('sort', 'name')
     q = request.GET.get('q', '')
-    q_by = request.GET.get('q_by', 'name')  # 'id' или 'name'
+    q_by = request.GET.get('q_by', 'name')
 
     products_list = Product.objects.select_related('category').all()
 
@@ -491,7 +434,6 @@ def admin_products(request):
         else:
             products_list = products_list.filter(name__icontains=q)
 
-    # сортировка
     valid_sorts = {
         'price': 'price',
         '-price': '-price',
@@ -521,13 +463,8 @@ def admin_products(request):
     }
     return render(request, 'shop/admin_products.html', context)
 
-
-# 6. Добавление продукта
 @user_passes_test(is_staff_user)
 def admin_add_product(request):
-    """
-    Форма для добавления нового продукта.
-    """
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
@@ -542,13 +479,8 @@ def admin_add_product(request):
     }
     return render(request, 'shop/admin_product_form.html', context)
 
-
-# 7. Редактирование продукта
 @user_passes_test(is_staff_user)
 def admin_edit_product(request, product_id):
-    """
-    Форма для редактирования существующего продукта.
-    """
     product = get_object_or_404(Product, pk=product_id)
     
     if request.method == 'POST':
@@ -567,14 +499,9 @@ def admin_edit_product(request, product_id):
 
 @user_passes_test(is_staff_user)
 def admin_statistics(request):
-    """
-    Админская страница со статистикой и топ-10 списками.
-    GET параметр: period in ('all', 'day', 'month', 'year') — по умолчанию 'all'.
-    """
     period = request.GET.get('period', 'all')
     now = timezone.now()
 
-    # Опционально: сделать начало периода более «чистым»
     if period == 'day':
         period_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     elif period == 'month':
@@ -582,21 +509,17 @@ def admin_statistics(request):
     elif period == 'year':
         period_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
     else:
-        period_start = None  # all time
+        period_start = None
 
     order_date_filter = {}
     if period_start:
         order_date_filter['order__created_date__gte'] = period_start
 
-    from .models import OrderItem, Product, Category, Customer
-
-    # выражение для line total
     line_total_expr = ExpressionWrapper(
         F('quantity') * F('unit_price'),
         output_field=DecimalField(max_digits=18, decimal_places=2)
     )
 
-    # 1) Топ продуктов по количеству (и самый популярный — first)
     prod_qty_qs = (
         OrderItem.objects.filter(**order_date_filter)
         .values('product__id', 'product__name')
@@ -606,7 +529,6 @@ def admin_statistics(request):
     top_product = prod_qty_qs.first()
     top_products = list(prod_qty_qs[:10])
 
-    # Топ продуктов по выручке (для блока выручки — ТОП-10 товаров по line_total)
     prod_rev_qs = (
         OrderItem.objects.filter(**order_date_filter)
         .values('product__id', 'product__name')
@@ -615,13 +537,11 @@ def admin_statistics(request):
     )
     top_products_revenue = list(prod_rev_qs[:10])
 
-    # 2) Общая выручка за период
     revenue_agg = OrderItem.objects.filter(**order_date_filter).aggregate(
         total_revenue=Sum(line_total_expr)
     )
     total_revenue = revenue_agg.get('total_revenue') or 0
 
-    # 3) Топ категорий по количеству
     cat_qs = (
         OrderItem.objects.filter(**order_date_filter)
         .values('product__category__id', 'product__category__name')
@@ -631,7 +551,6 @@ def admin_statistics(request):
     top_category = cat_qs.first()
     top_categories = list(cat_qs[:10])
 
-    # 4) Топ покупателей по сумме покупок (total_spent)
     cust_qs = (
         OrderItem.objects.filter(**order_date_filter)
         .values('order__customer__id', 'order__customer__login')

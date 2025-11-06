@@ -50,17 +50,14 @@ class CustomUserCreationForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Меняем подписи для всех полей
         self.fields['username'].label = "Логин"
         self.fields['password1'].label = "Пароль"
         self.fields['password2'].label = "Подтверждение пароля"
 
-        # Помогаем пользователю
         self.fields['password1'].help_text = "Пароль должен содержать не менее 4 символов."
         self.fields['password1'].validators = [MinLengthValidator(4)]
         self.fields['password2'].help_text = None
 
-        # Добавляем bootstrap-класс ко всем полям
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
 
