@@ -13,6 +13,7 @@ urlpatterns = [
     path('cart/remove/<int:product_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('checkout/', views.checkout, name='checkout'),
     path('orders/success/<int:order_id>/', views.order_success, name='order_success'),
+
     path('admin-tables/', views.admin_tables_main, name='admin_tables_main'),
     path('admin-tables/customers/', views.admin_customers, name='admin_customers'),
     path('admin-tables/orders/', views.admin_orders, name='admin_orders'),
@@ -22,6 +23,7 @@ urlpatterns = [
     path('admin-tables/products/add/', views.admin_add_product, name='admin_add_product'),
     path('admin-tables/products/edit/<int:product_id>/', views.admin_edit_product, name='admin_edit_product'),
     path('admin-tables/statistics/', views.admin_statistics, name='admin_statistics'),
+    
     path('signup/', views.signup, name='signup'),
     path('accounts/', include('django.contrib.auth.urls')),
 ]

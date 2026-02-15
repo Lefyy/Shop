@@ -3,6 +3,7 @@ from django.views.generic import ListView, DetailView
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.models import User
 from django.contrib.auth import login, update_session_auth_hash
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -15,7 +16,7 @@ from django.db import transaction
 from decimal import Decimal
 from datetime import timedelta
 from .forms import CheckoutForm, CustomUserCreationForm, ProductForm 
-from .models import Product, Category, Orders, OrderItem, OrderStatus, Customer, AuthUser
+from .models import Product, Category, Orders, OrderItem, OrderStatus, Customer
 
 # ---------- Helpers for session cart ----------
 CART_SESSION_ID = 'cart'
