@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
+from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from django.core.validators import MinLengthValidator, RegexValidator
 from phonenumber_field.formfields import PhoneNumberField
@@ -40,24 +41,17 @@ class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ("username", "email", "full_name", "phone_number", "password1", "password2")
-        labels = {
-            'username': 'Логин',
-        }
-        widgets = {
-            'username': forms.TextInput(attrs={'placeholder': 'Введите логин'}),
-        }
+        labels = {'username': 'Логин'}
+        widgets = {'username': forms.TextInput(attrs={'placeholder': 'Введите логин'})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.fields['username'].label = "Логин"
         self.fields['password1'].label = "Пароль"
         self.fields['password2'].label = "Подтверждение пароля"
-
         self.fields['password1'].help_text = "Пароль должен содержать не менее 4 символов."
         self.fields['password1'].validators = [MinLengthValidator(4)]
         self.fields['password2'].help_text = None
-
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
 
@@ -69,17 +63,16 @@ class CustomUserCreationForm(UserCreationForm):
         return password2
 
     def save(self, commit=True):
+        # сохраняем User
         user = super().save(commit=False)
-        user.email = self.cleaned_data.get('email', '')
-        user.full_name = self.cleaned_data.get('full_name', '').strip()
+        user.email = self.cleaned_data.get('email', '').strip()
+        user.first_name = self.cleaned_data.get('full_name', '').strip()
         if commit:
             user.save()
+            # создаём Customer с привязкой к User
             Customer.objects.update_or_create(
                 user=user,
                 defaults={
-                    'full_name': user.full_name,
-                    'login': user.username,
-                    'email': user.email,
                     'phone_number': str(self.cleaned_data.get('phone_number', '')),
                 }
             )

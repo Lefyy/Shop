@@ -21,8 +21,8 @@
             {% for customer in customers %}
             <tr style="cursor: pointer;" onclick="window.location='{% url 'shop:admin_orders_by_customer' customer_id=customer.id %}';">
                 <td>{{ customer.id }}</td>
-                <td>{{ customer.login }}</td>
-                <td>{{ customer.full_name }}</td>
+                <td>{{ customer.user.username }}</td>
+                <td>{{ customer.user.first_name}}</td>
             </tr>
             {% empty %}
             <tr>

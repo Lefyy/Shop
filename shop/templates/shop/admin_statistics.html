@@ -106,7 +106,7 @@
         <div class="card-body">
           <h5 class="card-title">Лучший покупатель</h5>
           {% if top_customer %}
-            <p class="h4 mb-1">{{ top_customer.order__customer__login }}</p>
+            <p class="h4 mb-1">{{ top_customer.order__customer__user__username }}</p>
             <p class="text-muted">Сумма покупок: <strong>{{ top_customer.total_spent|floatformat:2 }} руб.</strong></p>
           {% else %}
             <p class="text-muted">Нет данных за этот период.</p>
@@ -119,7 +119,7 @@
             <ol class="mb-0 ps-3">
               {% for c in top_customers %}
                 <li style="margin-bottom:6px;">
-                  {{ c.order__customer__login }} — <strong>{{ c.total_spent|floatformat:2 }}</strong> руб.
+                  {{ c.order__customer__user__username }} — <strong>{{ c.total_spent|floatformat:2 }}</strong> руб.
                 </li>
               {% endfor %}
             </ol>
