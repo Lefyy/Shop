@@ -14,7 +14,10 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Orders)
 class OrdersAdmin(admin.ModelAdmin):
     list_display = ('id', 'customer', 'created_date', 'status')
-    search_fields = ('customer__full_name',)
+    search_fields = (
+        'customer__user__username',
+        'customer__user__email',
+    )
     list_filter = ('status',)
 
 @admin.register(OrderItem)
@@ -27,5 +30,17 @@ class OrderStatusAdmin(admin.ModelAdmin):
 
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ('id','full_name','login')
-    search_fields = ('full_name','login')
+    list_display = ('id', 'username', 'full_name', 'email')
+    search_fields = ('user__username', 'user__email')
+
+    def username(self, obj):
+        return obj.user.username
+    username.admin_order_field = 'user__username'
+
+    def full_name(self, obj):
+        return obj.user.get_full_name()
+    full_name.admin_order_field = 'user__first_name'
+
+    def email(self, obj):
+        return obj.user.email
+    email.admin_order_field = 'user__email'
