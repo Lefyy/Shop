@@ -29,8 +29,8 @@ class Customer(models.Model):
 
 
 class OrderItem(models.Model):
-    order = models.ForeignKey('Orders', models.DO_NOTHING)
-    product = models.ForeignKey('Product', models.DO_NOTHING)
+    order = models.ForeignKey('Orders', models.CASCADE)
+    product = models.ForeignKey('Product', models.PROTECT)
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -50,9 +50,9 @@ class OrderStatus(models.Model):
 
 
 class Orders(models.Model):
-    customer = models.ForeignKey(Customer, models.DO_NOTHING)
+    customer = models.ForeignKey(Customer, models.PROTECT)
     created_date = models.DateTimeField(auto_now_add=True)
-    status = models.ForeignKey(OrderStatus, models.DO_NOTHING)
+    status = models.ForeignKey(OrderStatus, models.PROTECT)
 
     class Meta:
         db_table = 'orders'
@@ -62,7 +62,7 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.IntegerField()
-    category = models.ForeignKey(Category, models.DO_NOTHING)
+    category = models.ForeignKey(Category, models.PROTECT)
     image = models.ImageField(upload_to="products/%Y/%m/%d/", blank=True, null=True)
 
     class Meta:
