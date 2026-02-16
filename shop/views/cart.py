@@ -13,7 +13,25 @@ logger = logging.getLogger(__name__)
 @require_POST
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
-    qty = int(request.POST.get("quantity", 1))
+    raw_quantity = request.POST.get("quantity", 1)
+
+    try:
+        qty = int(raw_quantity)
+    except (TypeError, ValueError):
+        messages.warning(request, "Некорректное количество товара.")
+        return redirect("shop:view_cart")
+
+    if qty < 1:
+        messages.warning(request, "Количество должно быть не меньше 1.")
+        return redirect("shop:view_cart")
+
+    if product.quantity is not None and product.quantity <= 0:
+        messages.info(request, "Товар временно отсутствует на складе.")
+        return redirect("shop:view_cart")
+
+    if product.quantity is not None and qty > product.quantity:
+        qty = product.quantity
+        messages.info(request, f"Количество ограничено доступным остатком ({product.quantity}).")
     
     add_product(request.session, product, qty)
     return redirect("shop:view_cart")
@@ -40,13 +58,20 @@ def update_cart(request):
             qty = int(value)
             product = Product.objects.get(id=pid)
             
+            if product.quantity is not None and qty > product.quantity:
+                messages.info(request, f"Количество для «{product.name}» ограничено доступным остатком ({product.quantity}).")
+
             changed, msg = update_product_quantity(request.session, product, qty)
             if changed:
                 any_changes = True
                 if msg != "Удалено" and msg != "Обновлено":
                     messages.warning(request, msg)
                     
-        except (ValueError, TypeError, Product.DoesNotExist):
+        except (ValueError, TypeError):
+            messages.warning(request, "Некорректное количество товара.")
+            continue
+        except Product.DoesNotExist:
+            messages.info(request, "Один из товаров уже недоступен.")
             continue
 
     if any_changes:

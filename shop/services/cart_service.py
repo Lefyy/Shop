@@ -14,15 +14,22 @@ def add_product(session, product, quantity):
     cart = get_cart(session)
     pid = str(product.id)
     
+    if quantity <= 0:
+        return False, "Некорректное количество"
+
     current_qty = cart.get(pid, 0)
     new_qty = current_qty + quantity
     
     # Проверка доступного количества
     if product.quantity is not None and new_qty > product.quantity:
         new_qty = product.quantity
+
+    if new_qty <= 0:
+        return False, "Недостаточно товара"
         
     cart[pid] = new_qty
     save_cart(session, cart)
+    return True, "Добавлено"
 
 def remove_product(session, product_id):
     cart = get_cart(session)
