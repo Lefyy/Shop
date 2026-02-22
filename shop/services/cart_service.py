@@ -20,7 +20,6 @@ def add_product(session, product, quantity):
     current_qty = cart.get(pid, 0)
     new_qty = current_qty + quantity
     
-    # Проверка доступного количества
     if product.quantity is not None and new_qty > product.quantity:
         new_qty = product.quantity
 

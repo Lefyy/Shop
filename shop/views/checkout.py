@@ -24,7 +24,6 @@ def checkout(request):
         form = CheckoutForm(initial=initial)
         return render(request, 'shop/checkout.html', {'form': form, 'items': items, 'total': total})
 
-    # Обработка POST-запроса (подтверждение заказа)
     form = CheckoutForm(request.POST)
     if not form.is_valid():
         return render(request, 'shop/checkout.html', {'form': form, 'items': items, 'total': total})

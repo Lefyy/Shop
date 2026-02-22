@@ -6,7 +6,6 @@ logger = logging.getLogger(__name__)
 
 @transaction.atomic
 def create_order(customer, cart, address=None):
-    # Обновляем адрес, если он изменился
     if address and customer.address != address:
         customer.address = address
         customer.save(update_fields=['address'])

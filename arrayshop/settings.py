@@ -123,7 +123,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-#media url
+# Media url
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

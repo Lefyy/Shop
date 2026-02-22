@@ -1,8 +1,8 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
-from django.core.validators import MinLengthValidator, RegexValidator
+from django.core.validators import MinLengthValidator
 from phonenumber_field.formfields import PhoneNumberField
 from .models import Product, Customer
 from django.utils.translation import gettext_lazy as _
@@ -63,13 +63,11 @@ class CustomUserCreationForm(UserCreationForm):
         return password2
 
     def save(self, commit=True):
-        # сохраняем User
         user = super().save(commit=False)
         user.email = self.cleaned_data.get('email', '').strip()
         user.first_name = self.cleaned_data.get('full_name', '').strip()
         if commit:
             user.save()
-            # создаём Customer с привязкой к User
             Customer.objects.update_or_create(
                 user=user,
                 defaults={

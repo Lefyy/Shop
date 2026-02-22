@@ -1,9 +1,10 @@
 import logging
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 
 from ..models import Product
+from ..selectors.cart_selectors import get_product_by_id_or_404, get_product_by_id
 from ..services.cart_service import (
     add_product, get_cart, build_cart_items, remove_product, update_product_quantity
 )
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 @require_POST
 def add_to_cart(request, product_id):
-    product = get_object_or_404(Product, pk=product_id)
+    product = get_product_by_id_or_404(product_id)
     raw_quantity = request.POST.get("quantity", 1)
 
     try:
@@ -56,7 +57,7 @@ def update_cart(request):
         try:
             pid = int(key.split('_', 1)[1])
             qty = int(value)
-            product = Product.objects.get(id=pid)
+            product = get_product_by_id(pid)
             
             if product.quantity is not None and qty > product.quantity:
                 messages.info(request, f"Количество для «{product.name}» ограничено доступным остатком ({product.quantity}).")
