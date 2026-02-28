@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shop', '0005_sync_customer_fields'),
+        ('shop', '0001_initial'),
     ]
 
     operations = [

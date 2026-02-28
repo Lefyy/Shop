@@ -11,7 +11,7 @@ def profile(request):
     customer = getattr(user, 'customer', None)
 
     if customer:
-        orders = get_profile_orders()
+        orders = get_profile_orders(customer)
     else:
         orders = get_empty_orders()
 
